@@ -1,0 +1,6 @@
+<resources>
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="btn_width">150dp</dimen>
+    <dimen name="btn_height">50dp</dimen>
+    <dimen name="apps_icon_size">70dp</dimen>
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <ListPreference android:entries="@array/notification_labels" android:title="Notification bar" android:key="notification" android:defaultValue="1" android:entryValues="@array/notifications" />
+    <CheckBoxPreference android:title="Auto speaker phone" android:key="autoSpeakerPhone" android:summary="Turn speaker phone on in calls whenever phone is moved away from face." android:defaultValue="false" />
+    <CheckBoxPreference android:title="Legacy mode" android:key="legacy" android:summary="Earpiece mode may work better with this on some older devices." android:defaultValue="false" />
+    <CheckBoxPreference android:title="Remove boost option" android:key="removeBoost" android:summary="The boost option won't work on typical Android 4.2.1+ devices, so you might as well remove it.  Changing this option requires restarting Earpiece." android:defaultValue="false" />
+    <CheckBoxPreference android:title="Non-uniform boost" android:key="shape0" android:summary="Improves boosted voice clarity and MAY help decrease danger to speakers by focusing boost mainly on mid-level frequencies." android:defaultValue="true" />
+    <ListPreference android:entries="@array/maximum_boost_labels" android:title="Maximum allowed boost" android:key="maximumBoostPerc2" android:summary="Be extra careful with boosts above 40. Even 40 or less can be dangerous." android:defaultValue="60" android:entryValues="@array/maximum_boosts" />
+    <CheckBoxPreference android:title="Quiet camera" android:key="quietCamera" android:summary="Come back here to turn this off before upgrading or deinstalling, or you'll have an orphan process until you reboot." android:defaultValue="false" />
+    <CheckBoxPreference android:title="Notify LED when off" android:key="notifyLightOnlyWhenOff" android:summary="Make the notification LED flash only function when device is off." android:defaultValue="false" />
+</PreferenceScreen>

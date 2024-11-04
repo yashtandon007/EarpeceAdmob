@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">Earpiece Speaker</string>
+    <string name="title_activity_main">MainActivity</string>
+
+
+      <string name="ratetest">If you enjoy using this app, would you mind taking a moment to rate it? It won\'t take more than a minute. Thank you for your support! </string>
+    <string name="audio_through_earpiece">Audio through earpiece</string>
+    <string name="use_proximity_sensor">Use proximity sensor</string>
+    <string name="volume_boost">Volume boost</string>
+    <string name="more_apps">More Apps</string>
+
+    <!-- PRODUCTION    -->
+    <string name="banner">ca-app-pub-5486100768383502/7882123478</string>
+    <string name="intersticial">ca-app-pub-5486100768383502/8648410231</string>
+    <string name="appopen">ca-app-pub-5486100768383502/5734472288</string>
+
+    <!--  TEST ADD -->
+<!--    <string name="banner">ca-app-pub-3940256099942544/6300978111</string>-->
+<!--    <string name="intersticial">ca-app-pub-3940256099942544/1033173712</string>-->
+<!--    <string name="appopen">ca-app-pub-3940256099942544/3419835294</string>-->
+
+</resources>
