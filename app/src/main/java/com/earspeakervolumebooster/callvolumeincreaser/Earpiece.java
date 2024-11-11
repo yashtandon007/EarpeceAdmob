@@ -117,7 +117,7 @@ public class Earpiece extends Activity implements ServiceConnection {
 
     private void loadAdd() {
         Log.e("yash", " loadAdd");
-        showLoadAdMob();
+    //    showLoadAdMob();
         //  loadUnityAdd();
 
     }
