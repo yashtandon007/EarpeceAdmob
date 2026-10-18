@@ -1,6 +1,5 @@
 package com.earspeakervolumebooster.callvolumeincreaser;
 
-import static com.earspeakervolumebooster.callvolumeincreaser.MyApplication.adUnitId;
 import static com.earspeakervolumebooster.callvolumeincreaser.Options.PREF_BOOST;
 import static com.earspeakervolumebooster.callvolumeincreaser.Options.PREF_REMOVE_BOOST;
 
@@ -37,13 +36,8 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.interstitial.InterstitialAd;
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
+import com.google.android.gms.ads.AdView;
 import com.suke.widget.SwitchButton;
-import com.unity3d.ads.IUnityAdsLoadListener;
-import com.unity3d.ads.UnityAds;
-import com.unity3d.ads.UnityAdsShowOptions;
-import com.unity3d.services.banners.BannerView;
-import com.unity3d.services.banners.UnityBannerSize;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -105,7 +99,7 @@ public class Earpiece extends Activity implements ServiceConnection {
         }
 
         public void onCheckedChanged(SwitchButton button, boolean value) {
-            loadAdd();
+            showLoadAdMob();
 
             Earpiece.this.settings.equalizerActive = value;
             Earpiece.this.settings.save(Earpiece.this.options);
@@ -117,53 +111,51 @@ public class Earpiece extends Activity implements ServiceConnection {
 
     private void loadAdd() {
         Log.e("yash", " loadAdd");
-    //    showLoadAdMob();
-        //  loadUnityAdd();
-
     }
 
     private InterstitialAd mInterstitialAd;
+    private int clickCount = 0;
 
     private void showLoadAdMob() {
-
-        if (mInterstitialAd != null) {
-            mInterstitialAd.show(Earpiece.this);
-        } else {
-            Log.d("TAG", "The interstitial ad wasn't ready yet.");
+        clickCount++;
+        if (clickCount >= 3) {
+            clickCount = 0;
+            if (mInterstitialAd != null) {
+                mInterstitialAd.show(Earpiece.this);
+                mInterstitialAd = null;
+                loadAdMobInterstitial();
+            } else {
+                Log.d("TAG", "The interstitial ad wasn't ready yet.");
+                loadAdMobInterstitial();
+            }
         }
+    }
 
+    private void loadAdMobInterstitial() {
         AdRequest adRequest = new AdRequest.Builder().build();
-
         InterstitialAd.load(this, MyApplication.ADMOB_INTERSTICIAL, adRequest,
                 new InterstitialAdLoadCallback() {
                     @Override
                     public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
-                        // The mInterstitialAd reference will be null until
-                        // an ad is loaded.
                         mInterstitialAd = interstitialAd;
+                        mInterstitialAd.setFullScreenContentCallback(new com.google.android.gms.ads.FullScreenContentCallback() {
+                            @Override
+                            public void onAdDismissedFullScreenContent() {
+                                mInterstitialAd = null;
+                            }
+
+                            @Override
+                            public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
+                                mInterstitialAd = null;
+                            }
+                        });
                     }
 
                     @Override
                     public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                        // Handle the error
                         mInterstitialAd = null;
                     }
                 });
-    }
-
-
-    private void loadUnityAdd() {
-        UnityAds.load(adUnitId, new IUnityAdsLoadListener() {
-            @Override
-            public void onUnityAdsAdLoaded(String placementId) {
-                UnityAds.show(Earpiece.this, adUnitId, new UnityAdsShowOptions(), null);
-            }
-
-            @Override
-            public void onUnityAdsFailedToLoad(String placementId, UnityAds.UnityAdsLoadError error, String message) {
-                Log.e("UnityAdsExample", "Unity Ads failed to load ad for " + placementId + " with error: [" + error + "] " + message);
-            }
-        });
     }
 
     class C00067 implements OnSeekBarChangeListener {
@@ -195,7 +187,7 @@ public class Earpiece extends Activity implements ServiceConnection {
         @Override
         public void onCheckedChanged(SwitchButton switchButton, boolean value) {
             Log.e("ch", "checked_chnges");
-            loadAdd();
+            showLoadAdMob();
             Earpiece.this.settings.earpieceActive = value;
             Earpiece.this.settings.save(Earpiece.this.options);
             Earpiece.this.settings.setEarpiece();
@@ -214,7 +206,7 @@ public class Earpiece extends Activity implements ServiceConnection {
         }
 
         public void onCheckedChanged(SwitchButton button, boolean value) {
-            loadAdd();
+            showLoadAdMob();
             Earpiece.this.settings.proximity = value;
             Earpiece.this.settings.save(Earpiece.this.options);
             Earpiece.log("proximity=" + value + " needService()" + Earpiece.this.settings.needService());
@@ -241,12 +233,10 @@ public class Earpiece extends Activity implements ServiceConnection {
         setVolumeControlStream(3);
         this.main = (LinearLayout) getLayoutInflater().inflate(R.layout.main, null);
         setContentView(this.main);
-        FrameLayout frameLayout = findViewById(R.id.frameBanner);
-        BannerView banner = new BannerView(this, "Banner_Android", new UnityBannerSize(320, 50));
-        banner.load();
-        frameLayout.addView(banner);
+        AdView mAdView = findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
 
-        loadAdd();
         this.options = PreferenceManager.getDefaultSharedPreferences(this);
         this.settings = new Settings(this, false);
         this.boostBar = (SeekBar) findViewById(R.id.boost);
@@ -267,7 +257,7 @@ public class Earpiece extends Activity implements ServiceConnection {
         this.equalizerBox = (SwitchButton) findViewById(R.id.equalizer);
         this.equalizerContainer = findViewById(R.id.equalizer_inside);
 
-
+        loadAdMobInterstitial();
     }
 
 

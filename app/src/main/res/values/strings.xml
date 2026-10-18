@@ -10,9 +10,10 @@
     <string name="more_apps">More Apps</string>
 
     <!-- PRODUCTION    -->
-    <string name="banner">ca-app-pub-5486100768383502/7882123478</string>
-    <string name="intersticial">ca-app-pub-5486100768383502/8648410231</string>
-    <string name="appopen">ca-app-pub-5486100768383502/5734472288</string>
+    <!-- TODO: Replace with your actual Banner Ad Unit ID from AdMob -->
+    <string name="banner">ca-app-pub-7742762973514262/2861192896</string>
+    <string name="intersticial">ca-app-pub-7742762973514262/3046023282</string>
+    <string name="appopen">ca-app-pub-7742762973514262/2016846793</string>
 
     <!--  TEST ADD -->
 <!--    <string name="banner">ca-app-pub-3940256099942544/6300978111</string>-->

@@ -42,22 +42,14 @@ public class CustumDialog_Rate extends Dialog implements
 
     @Override
     public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.yes:
-
-
-                // rate this app;
-                rate();
-                c.finish();
-                break;
-            case R.id.no:
-
-                //no rating just exit APP
-                c.finish();
-
-                break;
-            default:
-                break;
+        int id = v.getId();
+        if (id == R.id.yes) {
+            // rate this app;
+            rate();
+            c.finish();
+        } else if (id == R.id.no) {
+            //no rating just exit APP
+            c.finish();
         }
         dismiss();
     }

@@ -8,8 +8,9 @@ import android.os.Bundle;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.OnLifecycleEvent;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.ProcessLifecycleOwner;
 
 import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.AdRequest;
@@ -17,8 +18,6 @@ import com.google.android.gms.ads.FullScreenContentCallback;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.appopen.AppOpenAd;
-import com.unity3d.ads.IUnityAdsInitializationListener;
-import com.unity3d.ads.UnityAds;
 
 import java.util.Date;
 
@@ -32,10 +31,6 @@ public class MyApplication extends Application implements Application.ActivityLi
     private static final String LOG_TAG = "AppOpenAdManager";
 
     public static final String ADMOB_INTERSTICIAL = "ca-app-pub-7742762973514262/3046023282";
-
-
-    // test
-  //  public static final String ADMOB_INTERSTICIAL = "ca-app-pub-3940256099942544/1033173712";
 
     /**
      * Interface definition for a callback to be invoked when an app open ad is complete.
@@ -53,49 +48,26 @@ public class MyApplication extends Application implements Application.ActivityLi
     /**
      * Inner class that loads and shows app open ads.
      */
-    private class AppOpenAdManager {
+    private class AppOpenAdManager implements DefaultLifecycleObserver {
 
         /**
          * Keep track of the time an app open ad is loaded to ensure you don't show an expired ad.
          */
         private long loadTime = 0;
 
-        // ...
-
         /**
-         * Utility method to check if ad was loaded more than n hours ago.
+         * Constructor.
          */
-        private boolean wasLoadTimeLessThanNHoursAgo(long numHours) {
-            long dateDifference = (new Date()).getTime() - this.loadTime;
-            long numMilliSecondsPerHour = 3600000;
-            return (dateDifference < (numMilliSecondsPerHour * numHours));
+        public AppOpenAdManager() {
+            ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         }
 
-        /**
-         * Check if ad exists and can be shown.
-         */
-        public boolean isAdAvailable() {
-            return appOpenAd != null && wasLoadTimeLessThanNHoursAgo(4);
-        }
-
-
-        private static final String AD_UNIT_ID = "ca-app-pub-7742762973514262/2016846793";
-
-        // TEST ADD UNIT
-     //   private static final String AD_UNIT_ID = "ca-app-pub-3940256099942544/9257395921";
-
-        private AppOpenAd appOpenAd = null;
-        private boolean isLoadingAd = false;
-        private boolean isShowingAd = false;
-
-
-        /**
-         * LifecycleObserver method that shows the app open ad when the app moves to foreground.
-         */
-        @OnLifecycleEvent(Lifecycle.Event.ON_START)
-        protected void onMoveToForeground() {
-            // Show the ad (if available) when the app moves to foreground.
-            appOpenAdManager.showAdIfAvailable(currentActivity);
+        @Override
+        public void onStart(@NonNull LifecycleOwner owner) {
+            DefaultLifecycleObserver.super.onStart(owner);
+            if (currentActivity != null) {
+                showAdIfAvailable(currentActivity);
+            }
         }
 
         /**
@@ -169,13 +141,31 @@ public class MyApplication extends Application implements Application.ActivityLi
             isShowingAd = true;
             appOpenAd.show(activity);
         }
-        // ...
 
         /**
-         * Constructor.
+         * Utility method to check if ad was loaded more than n hours ago.
          */
-        public AppOpenAdManager() {
+        private boolean wasLoadTimeLessThanNHoursAgo(long numHours) {
+            long dateDifference = (new Date()).getTime() - this.loadTime;
+            long numMilliSecondsPerHour = 3600000;
+            return (dateDifference < (numMilliSecondsPerHour * numHours));
         }
+
+        /**
+         * Check if ad exists and can be shown.
+         */
+        public boolean isAdAvailable() {
+            return appOpenAd != null && wasLoadTimeLessThanNHoursAgo(4);
+        }
+
+        private static final String AD_UNIT_ID = "ca-app-pub-7742762973514262/2016846793";
+
+        // TEST ADD UNIT
+        //   private static final String AD_UNIT_ID = "ca-app-pub-3940256099942544/9257395921";
+
+        private AppOpenAd appOpenAd = null;
+        private boolean isLoadingAd = false;
+        private boolean isShowingAd = false;
 
         /**
          * Request an ad.
@@ -213,41 +203,21 @@ public class MyApplication extends Application implements Application.ActivityLi
     }
 
 
-    String gameID = "5027483";
-    Boolean TESTMODE = false;
-    public static String adUnitId = "Interstitial_Android";
-
-
     @Override
     public void onCreate() {
         super.onCreate();
         this.registerActivityLifecycleCallbacks(this);
         Log.d(LOG_TAG, "onCreate");
 
-        new Thread(
-                () -> {
-                    // Initialize the Google Mobile Ads SDK on a background thread.
-                    MobileAds.initialize(this, initializationStatus -> {
-                    });
-                })
-                .start();
+        // Initialize the Google Mobile Ads SDK.
+        try {
+            MobileAds.initialize(this, initializationStatus -> {
+            });
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Failed to initialize MobileAds: " + e.getMessage());
+        }
 
         appOpenAdManager = new AppOpenAdManager();
-
-//        UnityAds.initialize(this, gameID, TESTMODE, new IUnityAdsInitializationListener() {
-//            @Override
-//            public void onInitializationComplete() {
-//                Log.e("unity", "onInitializationComplete");
-//            }
-//
-//            @Override
-//            public void onInitializationFailed(UnityAds.UnityAdsInitializationError unityAdsInitializationError, String s) {
-//                Log.e("unity", "onInitializationFailed");
-//
-//            }
-//        });
-
-
     }
 
     /**

@@ -4,7 +4,8 @@ plugins {
 }
 
 android {
-    compileSdk 34
+    namespace 'com.earspeakervolumebooster.callvolumeincreaser'
+    compileSdk 36
     signingConfigs{
         release{
             storeFile file("goldAppsLabs.jks")
@@ -16,9 +17,9 @@ android {
     defaultConfig {
         applicationId "com.earspeakervolumebooster.callvolumeincreaser"
         minSdk 21
-        targetSdk 34
-        versionCode 25
-        versionName "2.22"
+        targetSdk 36
+        versionCode 333
+        versionName "333.3"
 
     }
 
@@ -72,6 +73,5 @@ dependencies {
     implementation 'com.google.android.gms:play-services-ads:23.3.0'
 
     implementation 'androidx.work:work-runtime-ktx:2.7.0'
-    implementation fileTree(dir: "libs", include: ["*.aar"])
 
 }
