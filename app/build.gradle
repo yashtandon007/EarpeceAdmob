@@ -21,8 +21,8 @@ android {
         applicationId "com.earspeakervolumebooster.callvolumeincreaser"
         minSdk 21
         targetSdk 36
-        versionCode 334
-        versionName "333.4"
+        versionCode 337
+        versionName "337.5"
         manifestPlaceholders = [admobAppId: "ca-app-pub-7742762973514262~3281553937"]
 
     }
