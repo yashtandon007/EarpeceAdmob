@@ -3,14 +3,6 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
-def releaseSigningValues = [
-        storeFile: System.getenv("RELEASE_STORE_FILE"),
-        storePassword: System.getenv("RELEASE_STORE_PASSWORD"),
-        keyAlias: System.getenv("RELEASE_KEY_ALIAS"),
-        keyPassword: System.getenv("RELEASE_KEY_PASSWORD")
-]
-def hasReleaseSigning = releaseSigningValues.values().every { it != null && !it.isEmpty() }
-
 android {
     namespace 'com.earspeakervolumebooster.callvolumeincreaser'
     compileSdk 36
@@ -18,13 +10,11 @@ android {
         buildConfig true
     }
     signingConfigs {
-        if (hasReleaseSigning) {
-            release {
-                storeFile file(releaseSigningValues.storeFile)
-                storePassword releaseSigningValues.storePassword
-                keyAlias releaseSigningValues.keyAlias
-                keyPassword releaseSigningValues.keyPassword
-            }
+        release {
+            storeFile file("goldAppsLabs.jks")
+            storePassword "12345678"
+            keyAlias "TestingApp"
+            keyPassword "12345678"
         }
     }
     defaultConfig {
@@ -42,9 +32,7 @@ android {
             manifestPlaceholders = [admobAppId: "ca-app-pub-3940256099942544~3347511713"]
         }
         release {
-            if (hasReleaseSigning) {
-                signingConfig signingConfigs.release
-            }
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
