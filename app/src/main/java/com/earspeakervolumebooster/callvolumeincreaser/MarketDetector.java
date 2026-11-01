@@ -14,11 +14,11 @@ public class MarketDetector {
 
     public static void launch(Context c) {
         Intent i = new Intent("android.intent.action.VIEW");
-        i.setFlags(268435456);
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         if (detect(c) == 0) {
             i.setData(Uri.parse("market://search?q=pub:\"Omega Centauri Software\""));
         } else {
-            i.setData(Uri.parse("http://www.amazon.com/gp/mas/dl/android?p=mobi.omegacentauri.ScreenDim.Full&showAll=1"));
+            i.setData(Uri.parse("https://www.amazon.com/gp/mas/dl/android?p=mobi.omegacentauri.ScreenDim.Full&showAll=1"));
         }
         c.startActivity(i);
     }

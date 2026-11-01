@@ -1,11 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#383838</color>
-    <color name="colorPrimaryDark">#000</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="colorPrimary">#244B55</color>
+    <color name="colorPrimaryDark">#183840</color>
+    <color name="colorAccent">#287F83</color>
 
 
-    <color name="bg">#000000</color>
+    <color name="bg">#F3F6F7</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="white">#FFFFFF</color>
+    <color name="ad_surface">#FFFFFF</color>
+    <color name="text_primary">#19272C</color>
+    <color name="text_secondary">#64747A</color>
+    <color name="warning_surface">#FFF5DF</color>
+    <color name="warning_text">#795719</color>
+    <color name="outline">#D8E1E3</color>
+    <color name="alt_bg">#182329</color>
+    <color name="alt_surface">#202F36</color>
+    <color name="alt_text_primary">#F1F6F7</color>
+    <color name="alt_text_secondary">#B4C4C8</color>
+    <color name="alt_outline">#43575F</color>
+    <color name="alt_warning_surface">#473B27</color>
+    <color name="alt_warning_text">#F2D59B</color>
     <color name="grey_50">#FAFAFA</color>
     <color name="grey_100">#F5F5F5</color>
     <color name="grey_200">#EEEEEE</color>

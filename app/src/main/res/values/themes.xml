@@ -1,8 +1,35 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.EarpieceSpeakerNew" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Primary brand color. -->
+    <style name="Theme.EarpieceSpeakerNew" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:statusBarColor">@color/colorPrimaryDark</item>
+        <item name="android:navigationBarColor">@color/colorPrimaryDark</item>
+    </style>
 
-        <!-- Customize your theme here. -->
+    <style name="Theme.EarpieceSpeakerSettings" parent="Theme.AppCompat.DayNight.DarkActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <style name="Theme.EarpieceSpeakerSettings.Dark" parent="Theme.AppCompat">
+        <item name="colorPrimary">@color/alt_surface</item>
+        <item name="colorPrimaryDark">@color/alt_bg</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:statusBarColor">@color/alt_bg</item>
+        <item name="android:navigationBarColor">@color/alt_bg</item>
+    </style>
+
+    <style name="ThemeOverlay.Earpiece.Dialog.Light" parent="ThemeOverlay.AppCompat.Dialog.Alert">
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <style name="ThemeOverlay.Earpiece.Dialog.Dark" parent="ThemeOverlay.AppCompat.Dialog.Alert">
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:colorBackground">@color/alt_surface</item>
+        <item name="android:textColorPrimary">@color/alt_text_primary</item>
+        <item name="android:textColorSecondary">@color/alt_text_secondary</item>
     </style>
 </resources>

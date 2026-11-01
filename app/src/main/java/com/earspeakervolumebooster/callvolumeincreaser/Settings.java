@@ -18,11 +18,11 @@ import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.media.audiofx.Equalizer;
 import android.os.Build;
 import android.os.Build.VERSION;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.ViewConfiguration;
 
 public class Settings {
@@ -51,14 +51,15 @@ public class Settings {
     @SuppressLint({"NewApi"})
     public Settings(Context context, boolean activeEqualizer) {
         this.context = context;
-        this.audioManager = (AudioManager) context.getSystemService("audio");
-        this.sensorManager = (SensorManager) context.getSystemService("sensor");
+        this.audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        this.sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
         this.pm = context.getPackageManager();
-        this.proximitySensor = this.sensorManager.getDefaultSensor(8);
+        this.proximitySensor = this.sensorManager == null
+                ? null : this.sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
         this.eq = null;
         if (9 <= VERSION.SDK_INT && !PreferenceManager.getDefaultSharedPreferences(context).getBoolean(PREF_REMOVE_BOOST, false)) {
             try {
-                this.eq = new Equalizer(activeEqualizer ? 87654323 : Integer.MIN_VALUE, new MediaPlayer().getAudioSessionId());
+                this.eq = new Equalizer(activeEqualizer ? 87654323 : Integer.MIN_VALUE, 0);
                 this.bands = this.eq.getNumberOfBands();
                 this.rangeLow = this.eq.getBandLevelRange()[0];
                 this.rangeHigh = this.eq.getBandLevelRange()[1];
@@ -67,11 +68,11 @@ public class Settings {
                     return;
                 }
                 this.eq.release();
+                this.eq = null;
                 this.released = true;
-            } catch (UnsupportedOperationException e) {
-                this.eq = null;
-            } catch (IllegalArgumentException e2) {
-                this.eq = null;
+            } catch (RuntimeException exception) {
+                Log.w("Settings", "Audio effect is unavailable", exception);
+                releaseEqualizer();
             }
         }
     }
@@ -95,7 +96,9 @@ public class Settings {
         this.proximity = z;
         this.boostValue = pref.getInt(PREF_BOOST, 0);
         int maxBoost = (getMaximumBoost(pref) * this.rangeHigh) / 100;
-        if (this.boostValue > maxBoost) {
+        if (this.boostValue < 0) {
+            this.boostValue = 0;
+        } else if (this.boostValue > maxBoost) {
             this.boostValue = maxBoost;
         }
         this.disableKeyguardActive = pref.getBoolean(PREF_DISABLE_KEYGUARD, false);
@@ -117,13 +120,13 @@ public class Settings {
         ed.putBoolean(PREF_SHAPE, this.shape);
         ed.putBoolean(PREF_NOTIFY_LIGHT_ONLY_WHEN_OFF, this.notifyLightOnlyWhenOff);
         ed.putString(PREF_MAXIMUM_BOOST, this.maximumBoostPercent+"");
-        ed.commit();
+        ed.apply();
     }
 
     public void saveBoost(SharedPreferences pref) {
         Editor ed = pref.edit();
         ed.putInt(PREF_BOOST, this.boostValue);
-        ed.commit();
+        ed.apply();
     }
 
     public void setEarpiece() {
@@ -131,50 +134,52 @@ public class Settings {
     }
 
     public void setEarpiece(boolean value) {
-        int i = 2;
-        if (haveTelephony()) {
-            this.audioManager.setSpeakerphoneOn(false);
-            if (value) {
-                Earpiece.log("Earpiece mode on");
-                AudioManager audioManager = this.audioManager;
-                if (!this.legacy) {
-                    i = 3;
-                }
-                audioManager.setMode(i);
+        if (haveTelephony() && this.audioManager != null) {
+            try {
                 this.audioManager.setSpeakerphoneOn(false);
-                return;
+                if (value) {
+                    Earpiece.log("Earpiece mode on");
+                    this.audioManager.setMode(this.legacy
+                            ? AudioManager.MODE_IN_CALL
+                            : AudioManager.MODE_IN_COMMUNICATION);
+                    this.audioManager.setSpeakerphoneOn(false);
+                    return;
+                }
+                Earpiece.log("Earpiece mode off\t");
+                this.audioManager.setMode(AudioManager.MODE_NORMAL);
+                this.audioManager.setRouting(0, 2, -1);
+            } catch (RuntimeException exception) {
+                Log.w("Settings", "Unable to apply audio routing", exception);
             }
-            Earpiece.log("Earpiece mode off\t");
-            this.audioManager.setMode(0);
-            this.audioManager.setRouting(0, 2, -1);
         }
     }
 
     @SuppressLint({"NewApi"})
     public void setEqualizer(short v) {
         if (this.eq != null) {
-            this.eq.setEnabled(v != (short) 0);
-            if (v == (short) 0) {
-                Earpiece.log("no boost");
-                return;
-            }
-            for (short i = (short) 0; i < this.bands; i = (short) (i + 1)) {
-                short adj = v;
-                if (this.shape && v >= (short) 0) {
-                    int hz = this.eq.getCenterFreq(i) / 1000;
-                    if (hz < 150) {
-                        adj = (short) 0;
-                    } else if (hz < 250) {
-                        adj = (short) (v / 2);
-                    } else if (hz > 8000) {
-                        adj = (short) ((v * 3) / 4);
+            try {
+                this.eq.setEnabled(v != (short) 0);
+                if (v == (short) 0) {
+                    Earpiece.log("no boost");
+                    return;
+                }
+                for (short i = (short) 0; i < this.bands; i = (short) (i + 1)) {
+                    short adj = v;
+                    if (this.shape && v >= (short) 0) {
+                        int hz = this.eq.getCenterFreq(i) / 1000;
+                        if (hz < 150) {
+                            adj = (short) 0;
+                        } else if (hz < 250) {
+                            adj = (short) (v / 2);
+                        } else if (hz > 8000) {
+                            adj = (short) ((v * 3) / 4);
+                        }
                     }
-                }
-                try {
                     this.eq.setBandLevel(i, adj);
-                } catch (Exception exc) {
-                    Earpiece.log("Error " + exc);
                 }
+            } catch (RuntimeException exception) {
+                Log.w("Settings", "Unable to apply equalizer settings", exception);
+                releaseEqualizer();
             }
         }
     }
@@ -204,18 +209,33 @@ public class Settings {
 
     public void disableEqualizer() {
         if (this.eq != null && !this.released) {
-            Earpiece.log("Closing equalizer");
-            this.eq.setEnabled(false);
+            try {
+                Earpiece.log("Closing equalizer");
+                this.eq.setEnabled(false);
+            } catch (RuntimeException exception) {
+                Log.w("Settings", "Unable to disable equalizer", exception);
+                releaseEqualizer();
+            }
         }
     }
 
     public void destroyEqualizer() {
-        disableEqualizer();
-        if (this.eq != null && !this.released) {
-            Earpiece.log("Destroying equalizer");
-            this.eq.release();
-            this.released = true;
-            this.eq = null;
+        if (this.eq != null) {
+            disableEqualizer();
+            releaseEqualizer();
+        }
+    }
+
+    private void releaseEqualizer() {
+        if (this.eq != null) {
+            try {
+                this.eq.release();
+            } catch (RuntimeException exception) {
+                Log.w("Settings", "Unable to release equalizer", exception);
+            } finally {
+                this.eq = null;
+                this.released = true;
+            }
         }
     }
 

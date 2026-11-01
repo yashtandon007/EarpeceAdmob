@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <array name="notification_labels">
+    <string-array name="notification_labels">
         <item>never (service is less reliable)</item>
         <item>when boost/proximity active</item>
         <item>always</item>
-    </array>
-    <array name="notifications">
+    </string-array>
+    <string-array name="notifications">
         <item>0</item>
         <item>1</item>
         <item>2</item>
-    </array>
-    <array name="maximum_boost_labels">
+    </string-array>
+    <string-array name="maximum_boost_labels">
         <item>10%</item>
         <item>20%</item>
         <item>30%</item>
@@ -21,8 +21,8 @@
         <item>80%</item>
         <item>90%</item>
         <item>100%</item>
-    </array>
-    <array name="maximum_boosts">
+    </string-array>
+    <string-array name="maximum_boosts">
         <item>10</item>
         <item>20</item>
         <item>30</item>
@@ -33,5 +33,5 @@
         <item>80</item>
         <item>90</item>
         <item>100</item>
-    </array>
+    </string-array>
 </resources>

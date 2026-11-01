@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#263A42</color>
+    <color name="colorPrimaryDark">#152127</color>
+    <color name="colorAccent">#64B9B2</color>
+    <color name="bg">#182329</color>
+    <color name="surface">#202F36</color>
+    <color name="ad_surface">#202F36</color>
+    <color name="text_primary">#F1F6F7</color>
+    <color name="text_secondary">#B4C4C8</color>
+    <color name="warning_surface">#473B27</color>
+    <color name="warning_text">#F2D59B</color>
+    <color name="outline">#43575F</color>
+</resources>

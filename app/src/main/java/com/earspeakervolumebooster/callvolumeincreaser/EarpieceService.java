@@ -6,14 +6,17 @@ import android.annotation.SuppressLint;
 import android.app.KeyguardManager;
 import android.app.KeyguardManager.KeyguardLock;
 import android.app.Service;
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.media.AudioManager;
 import android.os.Build.VERSION;
 import android.os.Handler;
@@ -23,6 +26,7 @@ import android.os.Messenger;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
+import android.os.Looper;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -30,20 +34,21 @@ import android.util.Log;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.ref.WeakReference;
 import java.util.Random;
 
 public class EarpieceService extends Service implements SensorEventListener {
     private static final String GUARD_TAG = "mobi.omegacentauri.Earpiece.EarpieceService.guard";
     private static final int PROXIMITY_SCREEN_OFF_WAKE_LOCK = 32;
-    private static final String PROXIMITY_TAG = "mobi.omegacentauri.Earpiece.EarpieceService.proximity";
+    private static final String PROXIMITY_TAG = "EarpeceAdmob:proximity";
     private boolean closeToPhone = false;
     private boolean closeToPhoneValid = false;
     private KeyguardLock guardLock = null;
-    private boolean interruptReader = false;
+    private volatile boolean interruptReader = false;
     private KeyguardManager km;
-    private Process logProcess = null;
+    private volatile Process logProcess = null;
     private Thread logThread = null;
-    private final Messenger messenger = new Messenger(new IncomingHandler());
+    private Messenger messenger;
     private SharedPreferences options;
     protected boolean phoneOn = false;
     private PhoneStateListener phoneStateListener;
@@ -84,8 +89,13 @@ public class EarpieceService extends Service implements SensorEventListener {
             if (EarpieceService.this.phoneOn) {
                 if (EarpieceService.this.proximitySensor == null) {
                     EarpieceService.this.proximitySensor = EarpieceService.this.settings.proximitySensor;
-                    EarpieceService.this.settings.sensorManager.registerListener(EarpieceService.this, EarpieceService.this.proximitySensor, 2);
-                    Earpiece.log("Registering proximity sensor");
+                        if (EarpieceService.this.proximitySensor != null
+                                && EarpieceService.this.settings.sensorManager != null) {
+                            EarpieceService.this.settings.sensorManager.registerListener(
+                                    EarpieceService.this, EarpieceService.this.proximitySensor,
+                                    SensorManager.SENSOR_DELAY_NORMAL);
+                            Earpiece.log("Registering proximity sensor");
+                        }
                 }
             } else if (EarpieceService.this.proximitySensor != null) {
                 EarpieceService.this.disableProximitySensor();
@@ -100,32 +110,33 @@ public class EarpieceService extends Service implements SensorEventListener {
         }
 
         public void run() {
-            EarpieceService.this.interruptReader = false;
             EarpieceService.this.monitorLog();
         }
     }
 
-    class C00124 implements Runnable {
-        C00124() {
-        }
-
-        public void run() {
-            Log.v("hook", "shutDownHook");
-        }
-    }
-
-    public class IncomingHandler extends Handler {
+    private static class IncomingHandler extends Handler {
         public static final int MSG_OFF = 0;
         public static final int MSG_ON = 1;
         public static final int MSG_RELOAD_SETTINGS = 2;
 
+        private final WeakReference<EarpieceService> serviceReference;
+
+        IncomingHandler(EarpieceService service) {
+            super(Looper.getMainLooper());
+            this.serviceReference = new WeakReference<>(service);
+        }
+
         public void handleMessage(Message m) {
+            EarpieceService service = this.serviceReference.get();
+            if (service == null) {
+                return;
+            }
             Earpiece.log("Message: " + m.what);
             switch (m.what) {
                 case 2:
-                    EarpieceService.this.settings.load(EarpieceService.this.options);
-                    EarpieceService.this.settings.setEqualizer();
-                    EarpieceService.this.updateProximity();
+                    service.settings.load(service.options);
+                    service.settings.setEqualizer();
+                    service.updateProximity();
                     return;
                 default:
                     super.handleMessage(m);
@@ -136,9 +147,9 @@ public class EarpieceService extends Service implements SensorEventListener {
 
     class ScreenOnOffReceiver extends BroadcastReceiver {
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals("android.intent.action.SCREEN_ON")) {
+            if (Intent.ACTION_SCREEN_ON.equals(intent.getAction())) {
                 handleScreen(context, true);
-            } else if (intent.getAction().equals("android.intent.action.SCREEN_OFF")) {
+            } else if (Intent.ACTION_SCREEN_OFF.equals(intent.getAction())) {
                 handleScreen(context, false);
             }
         }
@@ -152,6 +163,9 @@ public class EarpieceService extends Service implements SensorEventListener {
     }
 
     public IBinder onBind(Intent arg0) {
+        if (this.messenger == null) {
+            this.messenger = new Messenger(new IncomingHandler(this));
+        }
         return this.messenger.getBinder();
     }
 
@@ -161,8 +175,8 @@ public class EarpieceService extends Service implements SensorEventListener {
         this.t0 = System.currentTimeMillis();
         Earpiece.log("create service " + this.t0);
         this.options = PreferenceManager.getDefaultSharedPreferences(this);
-        this.pm = (PowerManager) getSystemService("power");
-        this.km = (KeyguardManager) getSystemService("keyguard");
+        this.pm = (PowerManager) getSystemService(POWER_SERVICE);
+        this.km = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
         this.settings = new Settings(this, true);
         this.settings.load(this.options);
         if (this.settings.needScreenOnOffReceiver()) {
@@ -174,7 +188,7 @@ public class EarpieceService extends Service implements SensorEventListener {
             this.screenOnOffReceiver = null;
         }
         if (this.settings.haveTelephony()) {
-            this.tm = (TelephonyManager) getSystemService("phone");
+            this.tm = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
         } else {
             this.tm = null;
         }
@@ -213,7 +227,7 @@ public class EarpieceService extends Service implements SensorEventListener {
 
     private void updateSpeakerPhone() {
         boolean z = true;
-        if (this.settings.isAutoSpeakerPhoneActive()) {
+        if (this.settings.isAutoSpeakerPhoneActive() && hasPhoneStatePermission()) {
             Earpiece.log("updateSpeakerPhone " + this.phoneOn + " " + this.closeToPhone);
             StringBuilder stringBuilder = new StringBuilder("Speaker phone ");
             boolean z2 = this.phoneOn && !this.closeToPhone;
@@ -231,14 +245,23 @@ public class EarpieceService extends Service implements SensorEventListener {
 
     private void updateAutoSpeakerPhone() {
         if (this.tm != null) {
-            if (this.settings.isAutoSpeakerPhoneActive()) {
+            if (this.settings.isAutoSpeakerPhoneActive() && hasPhoneStatePermission()) {
                 Earpiece.log("Auto speaker phone mode on");
                 this.tm.listen(this.phoneStateListener, PROXIMITY_SCREEN_OFF_WAKE_LOCK);
                 return;
             }
+            if (this.settings.isAutoSpeakerPhoneActive()) {
+                Log.w("Earpiece", "Phone state permission is required for automatic speaker mode");
+            }
             Earpiece.log("Auto speaker phone mode off");
             this.tm.listen(this.phoneStateListener, 0);
         }
+    }
+
+    private boolean hasPhoneStatePermission() {
+        return VERSION.SDK_INT < 23
+                || checkSelfPermission(Manifest.permission.READ_PHONE_STATE)
+                == PackageManager.PERMISSION_GRANTED;
     }
 
     @SuppressLint({"NewApi"})
@@ -286,7 +309,16 @@ public class EarpieceService extends Service implements SensorEventListener {
     }
 
     private void setNotificationLight(boolean b) {
-        android.provider.Settings.System.putInt(getContentResolver(), "notification_light_pulse", b ? 1 : 0);
+        try {
+            boolean updated = android.provider.Settings.System.putInt(
+                    getContentResolver(), "notification_light_pulse", b ? 1 : 0);
+            if (!updated) {
+                Log.w("Earpiece", "Notification light setting is unavailable on this device");
+            }
+        } catch (SecurityException exception) {
+            Log.w("Earpiece", "Permission denied while changing notification light setting",
+                    exception);
+        }
     }
 
     public void onStart(Intent intent, int flags) {
@@ -294,7 +326,7 @@ public class EarpieceService extends Service implements SensorEventListener {
 
     public int onStartCommand(Intent intent, int flags, int startId) {
         onStart(intent, flags);
-        return 1;
+        return START_STICKY;
     }
 
     private void activateProximity() {
@@ -333,7 +365,9 @@ public class EarpieceService extends Service implements SensorEventListener {
         Earpiece.log("wakeLock " + (this.wakeLock != null));
         if (this.wakeLock != null) {
             Earpiece.log("disabling proximity " + this.t0);
-            this.wakeLock.release();
+            if (this.wakeLock.isHeld()) {
+                this.wakeLock.release();
+            }
             this.wakeLock = null;
         }
         if (!this.settings.disableKeyguardActive) {
@@ -359,7 +393,8 @@ public class EarpieceService extends Service implements SensorEventListener {
         if (event.sensor == this.settings.proximitySensor) {
             this.closeToPhone = event.values[0] < this.settings.proximitySensor.getMaximumRange();
             this.closeToPhoneValid = true;
-            if (this.tm.getCallState() != 2) {
+            if (!hasPhoneStatePermission()
+                    || this.tm.getCallState() != TelephonyManager.CALL_STATE_OFFHOOK) {
                 z = false;
             }
             this.phoneOn = z;
@@ -386,21 +421,18 @@ public class EarpieceService extends Service implements SensorEventListener {
 
     private void monitorLog() {
         Random x = new Random();
-        String logMarker = "m:" + System.currentTimeMillis() + ":" + x.nextLong() + ":" + this.t0;
         Log.v("hook", "set hook");
-        Runtime.getRuntime().addShutdownHook(new Thread(new C00124()));
-        while (true) {
+        while (!this.interruptReader) {
             this.logProcess = null;
             String marker = "mobi.omegacentauri.Earpiece:marker:" + System.currentTimeMillis() + ":" + x.nextLong() + ":";
             try {
                 Earpiece.log("logcat monitor starting");
                 Log.i("EarpieceMarker", marker);
                 this.logProcess = Runtime.getRuntime().exec(VERSION.SDK_INT >= 16 ? new String[]{"su", "-c", "logcat", "-b", "main", "EarpieceMarker:I", "AudioPolicyManager:E", "ShotSingle:I", "AXLOG:E", "CameraEngine:V", "*:S"} : new String[]{"logcat", "-b", "main", "EarpieceMarker:I", "AudioPolicyManager:E", "ShotSingle:I", "AXLOG:E", "CameraEngine:V", "*:S"});
-                BufferedReader logReader = new BufferedReader(new InputStreamReader(this.logProcess.getInputStream()));
-                Earpiece.log("reading");
-                while (true) {
-                    String line = logReader.readLine();
-                    if (!(line == null || this.interruptReader)) {
+                try (BufferedReader logReader = new BufferedReader(new InputStreamReader(this.logProcess.getInputStream()))) {
+                    Earpiece.log("reading");
+                    String line;
+                    while (!this.interruptReader && (line = logReader.readLine()) != null) {
                         if (marker != null) {
                             if (line.contains(marker)) {
                                 marker = null;
@@ -416,8 +448,10 @@ public class EarpieceService extends Service implements SensorEventListener {
                 }
             } catch (IOException e) {
                 Earpiece.log("logcat: " + e);
+            } finally {
                 if (this.logProcess != null) {
                     this.logProcess.destroy();
+                    this.logProcess = null;
                 }
             }
             if (this.interruptReader) {
@@ -428,6 +462,8 @@ public class EarpieceService extends Service implements SensorEventListener {
                 try {
                     Thread.sleep(5000);
                 } catch (InterruptedException e2) {
+                    Thread.currentThread().interrupt();
+                    return;
                 }
             }
         }

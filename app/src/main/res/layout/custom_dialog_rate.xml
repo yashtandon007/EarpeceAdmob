@@ -1,61 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rate_dialog_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/grey_900"
-    android:padding="16dp">
+    android:layout_height="wrap_content"
+    android:background="@drawable/shape_bg"
+    android:orientation="vertical"
+    android:padding="24dp">
 
-    <ImageView
-        android:id="@+id/help"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:src="@drawable/help"
-        android:layout_centerHorizontal="true"/>
+    <TextView
+        android:id="@+id/rate_dialog_mark"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="@drawable/settings_button_bg"
+        android:gravity="center"
+        android:text="★"
+        android:textColor="@color/colorAccent"
+        android:textSize="24sp" />
 
-
-    <RelativeLayout
-        android:layout_below="@id/help"
-        android:id="@+id/frame"
+    <TextView
+        android:id="@+id/rate_dialog_title"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:text="@string/rate_dialog_title"
+        android:textColor="@color/text_primary"
+        android:textSize="20sp"
+        android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/header_tv"
-            android:textColor="#bdffffff"
-            android:textSize="17sp"
-            android:layout_gravity="center"
-            android:layout_centerHorizontal="true"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/ratetest"/>
-     <RelativeLayout
-         android:layout_marginTop="16dp"
-         android:layout_marginRight="6dp"
-         android:layout_marginLeft="6dp"
-         android:layout_below="@id/header_tv"
-         android:layout_width="match_parent"
-         android:layout_height="wrap_content">
+    <TextView
+        android:id="@+id/header_tv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/rate_dialog_message"
+        android:textColor="@color/text_secondary"
+        android:textSize="15sp" />
 
-         <TextView
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
+        <Button
+            android:id="@+id/no"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/settings_button_bg"
+            android:text="@string/rate_not_now"
+            android:textAllCaps="false"
+            android:textColor="@color/colorPrimary" />
 
-             android:id="@+id/yes"
-             android:text="RATE NOW"
-             android:textColor="@color/red_400"
-             android:textSize="15sp"
-             android:layout_alignParentLeft="true"
-             android:layout_width="wrap_content"
-             android:layout_height="wrap_content" />
-         <TextView
-             android:id="@+id/no"
-             android:text="NO, THANKX"
-             android:textColor="@color/red_400"
-             android:textSize="15sp"
-             android:layout_alignParentRight="true"
-             android:layout_width="wrap_content"
-             android:layout_height="wrap_content" />
-
-     </RelativeLayout>
-    </RelativeLayout>
-</RelativeLayout>
+        <Button
+            android:id="@+id/yes"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:background="@color/colorPrimary"
+            android:text="@string/rate_app"
+            android:textAllCaps="false"
+            android:textColor="@color/white" />
+    </LinearLayout>
+</LinearLayout>

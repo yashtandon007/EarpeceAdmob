@@ -3,29 +3,48 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+def releaseSigningValues = [
+        storeFile: System.getenv("RELEASE_STORE_FILE"),
+        storePassword: System.getenv("RELEASE_STORE_PASSWORD"),
+        keyAlias: System.getenv("RELEASE_KEY_ALIAS"),
+        keyPassword: System.getenv("RELEASE_KEY_PASSWORD")
+]
+def hasReleaseSigning = releaseSigningValues.values().every { it != null && !it.isEmpty() }
+
 android {
     namespace 'com.earspeakervolumebooster.callvolumeincreaser'
     compileSdk 36
-    signingConfigs{
-        release{
-            storeFile file("goldAppsLabs.jks")
-            storePassword "12345678"
-            keyAlias "TestingApp"
-            keyPassword "12345678"
+    buildFeatures {
+        buildConfig true
+    }
+    signingConfigs {
+        if (hasReleaseSigning) {
+            release {
+                storeFile file(releaseSigningValues.storeFile)
+                storePassword releaseSigningValues.storePassword
+                keyAlias releaseSigningValues.keyAlias
+                keyPassword releaseSigningValues.keyPassword
+            }
         }
     }
     defaultConfig {
         applicationId "com.earspeakervolumebooster.callvolumeincreaser"
         minSdk 21
         targetSdk 36
-        versionCode 333
-        versionName "333.3"
+        versionCode 334
+        versionName "333.4"
+        manifestPlaceholders = [admobAppId: "ca-app-pub-7742762973514262~3281553937"]
 
     }
 
     buildTypes {
+        debug {
+            manifestPlaceholders = [admobAppId: "ca-app-pub-3940256099942544~3347511713"]
+        }
         release {
-            signingConfig signingConfigs.release
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -41,7 +60,7 @@ android {
 
 dependencies {
 
-    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.github.zcweng:switch-button:0.0.3@aar'
     def lifecycle_version = "2.6.0-alpha02"
     def arch_version = "2.1.0"
@@ -71,7 +90,9 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-reactivestreams-ktx:$lifecycle_version"
 
     implementation 'com.google.android.gms:play-services-ads:23.3.0'
+    implementation 'com.google.android.ump:user-messaging-platform:3.2.0'
 
     implementation 'androidx.work:work-runtime-ktx:2.7.0'
 
+    testImplementation 'junit:junit:4.13.2'
 }

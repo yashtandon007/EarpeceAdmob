@@ -8,16 +8,54 @@
     <string name="use_proximity_sensor">Use proximity sensor</string>
     <string name="volume_boost">Volume boost</string>
     <string name="more_apps">More Apps</string>
+    <string name="settings">Settings</string>
+    <string name="share_app">Share with a friend</string>
+    <string name="share_dialog_title">Share Earpiece Speaker</string>
+    <string name="share_dialog_message">Help someone discover a simple way to tune their audio experience.</string>
+    <string name="share_dialog_action">Choose an app to share</string>
+    <string name="share_message">Try Earpiece Speaker: %1$s</string>
+    <string name="rate_app">Rate app</string>
+    <string name="rate_not_now">Not now</string>
+    <string name="rate_dialog_title">Enjoying the app?</string>
+    <string name="rate_dialog_message">Your feedback helps us improve Earpiece Speaker.</string>
+    <string name="dark_theme">Always use dark theme</string>
+    <string name="dark_theme_summary">When off, match your phone’s light or dark appearance.</string>
+    <string name="privacy_options">Privacy options</string>
+    <string name="privacy_options_summary">Review and update your advertising consent choices.</string>
+    <string name="privacy_options_unavailable">No privacy choices are currently available.</string>
+    <string name="app_tagline">Clearer calls and audio, tuned to your device.</string>
+    <string name="audio_controls">Audio controls</string>
+    <string name="boost_default">Boost: 0%</string>
+    <string name="boost_value">Boost: %1$d%%</string>
+    <string name="boost_warning">Increase gradually. High boost levels can damage your speaker or hearing.</string>
+    <string name="theme_reward_title">Optional rewards</string>
+    <string name="theme_reward_summary">Unlock an alternate theme once, or watch an ad for one banner-free hour.</string>
+    <string name="reward_options_title">Optional rewards</string>
+    <string name="reward_options_summary">Unlock a theme once, or choose a banner-free hour after an ad.</string>
+    <string name="theme_reward_loading">Preparing reward…</string>
+    <string name="theme_reward_watch">Watch ad to unlock theme</string>
+    <string name="theme_reward_unavailable_button">Reward ad unavailable - tap to retry</string>
+    <string name="theme_reward_switch">Switch to alternate theme</string>
+    <string name="theme_reward_switch_back">Switch to original theme</string>
+    <string name="theme_reward_unavailable">Reward ad unavailable. Please try again later.</string>
+    <string name="theme_reward_cooldown">A full-screen ad was shown recently. Try again later.</string>
+    <string name="theme_reward_unlocked">Alternate theme unlocked!</string>
+    <string name="banner_free_reward_watch">Watch ad for 1 hour without banner</string>
+    <string name="banner_free_reward_unavailable">Preparing banner-free reward…</string>
+    <string name="banner_free_reward_active">Banner hidden for %1$d min</string>
+    <string name="banner_free_reward_granted">Banner hidden for one hour.</string>
+    <string name="native_ad_label">Sponsored</string>
+    <string name="native_ad_headline">Sponsored content</string>
+    <string name="native_ad_body">Discover more.</string>
+    <string name="native_ad_action">Learn more</string>
+    <string name="native_advertiser">Advertiser</string>
 
-    <!-- PRODUCTION    -->
-    <!-- TODO: Replace with your actual Banner Ad Unit ID from AdMob -->
+    <!-- Production ad units -->
     <string name="banner">ca-app-pub-7742762973514262/2861192896</string>
-    <string name="intersticial">ca-app-pub-7742762973514262/3046023282</string>
+    <string name="interstitial">ca-app-pub-7742762973514262/3046023282</string>
+    <string name="rewarded_ad_unit">ca-app-pub-7742762973514262/9225268143</string>
+    <string name="rewarded_interstitial_ad_unit">ca-app-pub-7742762973514262/8158056494</string>
+    <string name="native_ad_unit">ca-app-pub-7742762973514262/1676408625</string>
     <string name="appopen">ca-app-pub-7742762973514262/2016846793</string>
-
-    <!--  TEST ADD -->
-<!--    <string name="banner">ca-app-pub-3940256099942544/6300978111</string>-->
-<!--    <string name="intersticial">ca-app-pub-3940256099942544/1033173712</string>-->
-<!--    <string name="appopen">ca-app-pub-3940256099942544/3419835294</string>-->
 
 </resources>

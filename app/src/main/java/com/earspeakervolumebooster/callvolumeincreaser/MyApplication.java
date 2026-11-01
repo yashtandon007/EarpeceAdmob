@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
+import android.preference.PreferenceManager;
 
 import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.AdRequest;
@@ -18,6 +19,7 @@ import com.google.android.gms.ads.FullScreenContentCallback;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.appopen.AppOpenAd;
+import com.google.android.ump.UserMessagingPlatform;
 
 import java.util.Date;
 
@@ -30,7 +32,10 @@ public class MyApplication extends Application implements Application.ActivityLi
 
     private static final String LOG_TAG = "AppOpenAdManager";
 
-    public static final String ADMOB_INTERSTICIAL = "ca-app-pub-7742762973514262/3046023282";
+    private static final long APP_OPEN_AD_COOLDOWN_MILLIS = 60 * 60 * 1000L;
+    private static final String PREF_APP_OPEN_AD_LAST_SHOWN = "lastAppOpenAdShown";
+    static final String PREF_LAST_FULLSCREEN_AD_SHOWN = "lastFullscreenAdShown";
+    private static final long MIN_FULLSCREEN_AD_INTERVAL_MILLIS = 15 * 60 * 1000L;
 
     /**
      * Interface definition for a callback to be invoked when an app open ad is complete.
@@ -65,9 +70,29 @@ public class MyApplication extends Application implements Application.ActivityLi
         @Override
         public void onStart(@NonNull LifecycleOwner owner) {
             DefaultLifecycleObserver.super.onStart(owner);
-            if (currentActivity != null) {
-                showAdIfAvailable(currentActivity);
+            if (currentActivity != null && hasAdConsent()) {
+                if (!isWithinAdCooldown() && !hasRecentFullscreenAd()) {
+                    showAdIfAvailable(currentActivity);
+                } else {
+                    Log.d(LOG_TAG, "App-open ad skipped by frequency cap.");
+                }
             }
+        }
+
+        private boolean isWithinAdCooldown() {
+            long lastShown = PreferenceManager.getDefaultSharedPreferences(MyApplication.this)
+                    .getLong(PREF_APP_OPEN_AD_LAST_SHOWN, 0);
+            long timeSinceLastShown = System.currentTimeMillis() - lastShown;
+            return lastShown > 0 && timeSinceLastShown >= 0
+                    && timeSinceLastShown < APP_OPEN_AD_COOLDOWN_MILLIS;
+        }
+
+        private boolean hasRecentFullscreenAd() {
+            long lastShown = PreferenceManager.getDefaultSharedPreferences(MyApplication.this)
+                    .getLong(PREF_LAST_FULLSCREEN_AD_SHOWN, 0);
+            long timeSinceLastShown = System.currentTimeMillis() - lastShown;
+            return lastShown > 0 && timeSinceLastShown >= 0
+                    && timeSinceLastShown < MIN_FULLSCREEN_AD_INTERVAL_MILLIS;
         }
 
         /**
@@ -91,6 +116,11 @@ public class MyApplication extends Application implements Application.ActivityLi
         public void showAdIfAvailable(
                 @NonNull final Activity activity,
                 @NonNull OnShowAdCompleteListener onShowAdCompleteListener) {
+            if (activity.isFinishing() || activity.isDestroyed()) {
+                Log.d(LOG_TAG, "App-open ad skipped because activity is not usable.");
+                onShowAdCompleteListener.onShowAdComplete();
+                return;
+            }
             // If the app open ad is already showing, do not show the ad again.
             if (isShowingAd) {
                 Log.d(LOG_TAG, "The app open ad is already showing.");
@@ -101,7 +131,7 @@ public class MyApplication extends Application implements Application.ActivityLi
             if (!isAdAvailable()) {
                 Log.d(LOG_TAG, "The app open ad is not ready yet.");
                 onShowAdCompleteListener.onShowAdComplete();
-                loadAd(activity);
+                loadAd(MyApplication.this);
                 return;
             }
 
@@ -124,22 +154,35 @@ public class MyApplication extends Application implements Application.ActivityLi
                         public void onAdFailedToShowFullScreenContent(AdError adError) {
                             // Called when fullscreen content failed to show.
                             // Set the reference to null so isAdAvailable() returns false.
-                            Log.d(LOG_TAG, adError.getMessage());
+                            Log.w(LOG_TAG, "App-open ad failed to show: " + adError.getMessage());
                             appOpenAd = null;
                             isShowingAd = false;
 
                             onShowAdCompleteListener.onShowAdComplete();
-                            loadAd(activity);
+                            loadAd(MyApplication.this);
                         }
 
                         @Override
                         public void onAdShowedFullScreenContent() {
                             // Called when fullscreen content is shown.
                             Log.d(LOG_TAG, "Ad showed fullscreen content.");
+                            PreferenceManager.getDefaultSharedPreferences(MyApplication.this)
+                                    .edit()
+                                    .putLong(PREF_APP_OPEN_AD_LAST_SHOWN, System.currentTimeMillis())
+                                    .putLong(PREF_LAST_FULLSCREEN_AD_SHOWN, System.currentTimeMillis())
+                                    .apply();
                         }
                     });
             isShowingAd = true;
-            appOpenAd.show(activity);
+            try {
+                appOpenAd.show(activity);
+            } catch (RuntimeException exception) {
+                Log.e(LOG_TAG, "App-open ad could not be shown.", exception);
+                appOpenAd = null;
+                isShowingAd = false;
+                onShowAdCompleteListener.onShowAdComplete();
+                loadAd(MyApplication.this);
+            }
         }
 
         /**
@@ -148,7 +191,7 @@ public class MyApplication extends Application implements Application.ActivityLi
         private boolean wasLoadTimeLessThanNHoursAgo(long numHours) {
             long dateDifference = (new Date()).getTime() - this.loadTime;
             long numMilliSecondsPerHour = 3600000;
-            return (dateDifference < (numMilliSecondsPerHour * numHours));
+            return dateDifference >= 0 && dateDifference < (numMilliSecondsPerHour * numHours);
         }
 
         /**
@@ -157,11 +200,6 @@ public class MyApplication extends Application implements Application.ActivityLi
         public boolean isAdAvailable() {
             return appOpenAd != null && wasLoadTimeLessThanNHoursAgo(4);
         }
-
-        private static final String AD_UNIT_ID = "ca-app-pub-7742762973514262/2016846793";
-
-        // TEST ADD UNIT
-        //   private static final String AD_UNIT_ID = "ca-app-pub-3940256099942544/9257395921";
 
         private AppOpenAd appOpenAd = null;
         private boolean isLoadingAd = false;
@@ -172,14 +210,14 @@ public class MyApplication extends Application implements Application.ActivityLi
          */
         public void loadAd(Context context) {
             // Do not load ad if there is an unused ad or one is already loading.
-            if (isLoadingAd || isAdAvailable()) {
+            if (!MyApplication.this.hasAdConsent() || isLoadingAd || isAdAvailable()) {
                 return;
             }
 
             isLoadingAd = true;
             AdRequest request = new AdRequest.Builder().build();
             AppOpenAd.load(
-                    context, AD_UNIT_ID, request,
+                    context, getString(R.string.appopen), request,
                     AppOpenAd.APP_OPEN_AD_ORIENTATION_PORTRAIT,
                     new AppOpenAd.AppOpenAdLoadCallback() {
                         @Override
@@ -194,7 +232,9 @@ public class MyApplication extends Application implements Application.ActivityLi
                         @Override
                         public void onAdFailedToLoad(LoadAdError loadAdError) {
                             // Called when an app open ad has failed to load.
-                            Log.d(LOG_TAG, loadAdError.getMessage());
+                            Log.w(LOG_TAG, "App-open ad failed to load: " + loadAdError.getMessage());
+                            appOpenAd = null;
+                            loadTime = 0;
                             isLoadingAd = false;
                         }
                     });
@@ -202,6 +242,38 @@ public class MyApplication extends Application implements Application.ActivityLi
 
     }
 
+    private boolean hasAdConsent() {
+        return UserMessagingPlatform.getConsentInformation(this).canRequestAds();
+    }
+
+    void loadAppOpenAd(Activity activity) {
+        if (this.appOpenAdManager != null && hasAdConsent()) {
+            this.appOpenAdManager.loadAd(this);
+        }
+    }
+
+    boolean canShowInterstitial() {
+        if (!hasAdConsent() || (this.appOpenAdManager != null
+                && this.appOpenAdManager.isShowingAd)) {
+            return false;
+        }
+        long lastShown = PreferenceManager.getDefaultSharedPreferences(this)
+                .getLong(PREF_LAST_FULLSCREEN_AD_SHOWN, 0);
+        long timeSinceLastShown = System.currentTimeMillis() - lastShown;
+        return lastShown == 0 || timeSinceLastShown < 0
+                || timeSinceLastShown >= MIN_FULLSCREEN_AD_INTERVAL_MILLIS;
+    }
+
+    boolean canRequestAds() {
+        return hasAdConsent();
+    }
+
+    void recordFullscreenAdShown() {
+        PreferenceManager.getDefaultSharedPreferences(this)
+                .edit()
+                .putLong(PREF_LAST_FULLSCREEN_AD_SHOWN, System.currentTimeMillis())
+                .apply();
+    }
 
     @Override
     public void onCreate() {
@@ -238,6 +310,9 @@ public class MyApplication extends Application implements Application.ActivityLi
 
     @Override
     public void onActivityStopped(Activity activity) {
+        if (currentActivity == activity) {
+            currentActivity = null;
+        }
     }
 
     @Override
@@ -250,6 +325,8 @@ public class MyApplication extends Application implements Application.ActivityLi
 
     @Override
     public void onActivityDestroyed(Activity activity) {
+        if (currentActivity == activity) {
+            currentActivity = null;
+        }
     }
 }
-
