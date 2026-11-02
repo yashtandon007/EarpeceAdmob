@@ -32,10 +32,10 @@ public class MyApplication extends Application implements Application.ActivityLi
 
     private static final String LOG_TAG = "AppOpenAdManager";
 
-    private static final long APP_OPEN_AD_COOLDOWN_MILLIS = 60 * 60 * 1000L;
+    private static final long APP_OPEN_AD_COOLDOWN_MILLIS = 15 * 60 * 1000L;
     private static final String PREF_APP_OPEN_AD_LAST_SHOWN = "lastAppOpenAdShown";
     static final String PREF_LAST_FULLSCREEN_AD_SHOWN = "lastFullscreenAdShown";
-    private static final long MIN_FULLSCREEN_AD_INTERVAL_MILLIS = 15 * 60 * 1000L;
+    private static final long MIN_FULLSCREEN_AD_INTERVAL_MILLIS = 3 * 60 * 1000L;
 
     /**
      * Interface definition for a callback to be invoked when an app open ad is complete.
